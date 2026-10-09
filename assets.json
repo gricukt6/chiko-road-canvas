@@ -1,0 +1,14 @@
+{
+  "assets": [
+    {"name":"icon_1024","type":"icon","prompt":"App icon, one single glossy 3D rounded square tile half filled with meadow green paint and a golden rim, centered, cream radial gradient background, crisp, no text, no scene"},
+    {"name":"bg_loader","type":"bg","prompt":"Vertical 9:16 mobile game loader background, very dark warm brown dusk farm field, deep amber haze and soft vignette, moody, cinematic, no text, no UI elements"},
+    {"name":"bg_menu","type":"bg","prompt":"Vertical 9:16 mobile game menu background, sunny green farm islets seen from above on cream paper, golden fields, vibrant 3D render, no text, no UI elements"},
+    {"name":"bg_game","type":"bg","prompt":"Vertical 9:16 mobile game background, soft blurred cream paper texture with faint pale field patches, very low contrast for UI overlay, no text, no UI elements"},
+    {"name":"sprite_hero_chicken","type":"sprite","prompt":"One single cute cartoon chicken, centered icon, glossy 3D render, isolated on plain white, no other objects"},
+    {"name":"sprite_nest","type":"sprite","prompt":"One single cartoon straw nest, centered icon, glossy 3D render, isolated on plain white, no other objects"},
+    {"name":"sprite_tile_paint","type":"sprite","prompt":"One single glossy green rounded paint tile, centered icon, 3D render, isolated on plain white, no other objects"},
+    {"name":"sprite_brush","type":"sprite","prompt":"One single cartoon wooden paint brush, centered icon, glossy 3D render, isolated on plain white, no other objects"},
+    {"name":"sprite_star","type":"sprite","prompt":"One single glossy golden star, centered icon, 3D render, isolated on plain white, no other objects"},
+    {"name":"button_cta","type":"button","prompt":"Horizontal game CTA button background, warm gold to terracotta glossy gradient, rounded corners, no text"}
+  ]
+}
