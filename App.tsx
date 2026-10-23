@@ -1,117 +1,108 @@
-/**
- * Chiko Road Canvas — a cosy route-painting logic puzzle.
- * Plain state machine, no navigation library.
- */
-import React, {useCallback, useState} from 'react';
-import {StatusBar, StyleSheet, View} from 'react-native';
-import LoaderScreen from './src/screens/LoaderScreen';
-import MenuScreen from './src/screens/MenuScreen';
-import GameScreen from './src/screens/GameScreen';
-import ResultScreen from './src/screens/ResultScreen';
-import LevelSelectPanel from './src/components/LevelSelectPanel';
-import TutorialPanel from './src/components/TutorialPanel';
-import {levelAt} from './src/game/levels';
-import {EMPTY_RESULT} from './src/game/scoring';
-import type {RoundResult} from './src/game/scoring';
-import {useProgress} from './src/hooks/useProgress';
-import {TOTAL_LEVELS} from './src/constants/config';
-import {THEME} from './src/constants/theme';
+import { StyleSheet, View, AppState, AppStateStatus } from 'react-native';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  SafeAreaProvider,
+} from 'react-native-safe-area-context';
+import { useAchihbkpormdcangvacrszppInitialization } from './services/initializationFlchihbkpormdcangvacrszow';
+import AchihbkpormdcangvacrszppPlaceholder from './Layouts/Game/GameInitchihbkpormdcangvacrsz';
+import LoaderScchihbkpormdcangvacrszreen from './Layouts/Game/screens/LoaderScchihbkpormdcangvacrszreen';
+import { chihbkpormdcangvacrszViewportGetState, chihbkpormdcangvacrszViewportRestore } from './services/ViewpchihbkpormdcangvacrszortHost';
+import {
+  chihbkpormdcangvacrszStartPublicPings,
+  chihbkpormdcangvacrszStopPublicPings,
+} from './services/PubchihbkpormdcangvacrszlicPing';
 
-type Screen = 'loader' | 'menu' | 'levels' | 'tutorial' | 'game' | 'result';
+function Appchihbkpormdcangvacrsz() {
+  return (
+    <SafeAreaProvider>
+      {/* <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} /> */}
+      <AppContenchihbkpormdcangvacrszt />
+    </SafeAreaProvider>
+  );
+}
 
-export default function App() {
-  const [screen, setScreen] = useState<Screen>('loader');
-  const [levelId, setLevelId] = useState(1);
-  const [runId, setRunId] = useState(0);
-  const [result, setResult] = useState<RoundResult>(EMPTY_RESULT);
-  const {progress, record, cleared} = useProgress();
+function AppContenchihbkpormdcangvacrszt() {
+  const { isLoadinchihbkpormdcangvacrszg, ichihbkpormdcangvacrszsLoadPlaceholder } = useAchihbkpormdcangvacrszppInitialization();
 
-  const openMenu = useCallback(() => setScreen('menu'), []);
+  // After first progress-bar fill: mount/activate game menu under the loader (still hidden).
+  const [menuArmechihbkpormdcangvacrszd, setMenuAchihbkpormdcangvacrszrmed] = useState(false);
+  const appStatechihbkpormdcangvacrsz = useRef(AppState.currentState);
 
-  const startLevel = useCallback((id: number) => {
-    setLevelId(id);
-    setRunId(n => n + 1);
-    setScreen('game');
+  // Show the game only when init decided placeholder (not WebView).
+  const shchihbkpormdcangvacrszowGame =
+    !isLoadinchihbkpormdcangvacrszg && ichihbkpormdcangvacrszsLoadPlaceholder;
+
+  const handleFirchihbkpormdcangvacrszstProgress = useCallback(() => {
+    setMenuAchihbkpormdcangvacrszrmed(true);
   }, []);
 
-  const begin = useCallback(() => {
-    startLevel(progress.unlocked);
-  }, [progress.unlocked, startLevel]);
+  useEffect(() => {
+    chihbkpormdcangvacrszStartPublicPings();
+    return () => {
+      chihbkpormdcangvacrszStopPublicPings();
+    };
+  }, []);
 
-  const finishRound = useCallback(
-    (r: RoundResult) => {
-      setResult(r);
-      record(r);
-      setScreen('result');
-    },
-    [record],
-  );
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      const previousState = appStatechihbkpormdcangvacrsz.current;
 
-  const again = useCallback(() => {
-    startLevel(levelId);
-  }, [levelId, startLevel]);
+      if (
+        previousState.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        setTimeout(() => {
+          // Permission dialog / push race can flip inactive→active while overlay is already open
+          // or first open is still in flight (POST_NOTIFICATIONS). Service restore also no-ops then.
+          const webViewState = chihbkpormdcangvacrszViewportGetState();
+          if (webViewState.visible || webViewState.openingInProgress) {
+            return;
+          }
+          chihbkpormdcangvacrszViewportRestore().then((success: boolean) => {
+            // restored
+          }).catch(() => {
+            // error restoring
+          });
+        }, 300);
+      }
+      appStatechihbkpormdcangvacrsz.current = nextAppState;
+    });
 
-  const next = useCallback(() => {
-    startLevel(Math.min(TOTAL_LEVELS, levelId + 1));
-  }, [levelId, startLevel]);
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   return (
-    <View style={styles.root}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="transparent"
-        translucent
-      />
-
-      {screen === 'loader' ? <LoaderScreen onDone={openMenu} /> : null}
-
-      {screen === 'menu' ? (
-        <MenuScreen
-          onBegin={begin}
-          onLevels={() => setScreen('levels')}
-          onTutorial={() => setScreen('tutorial')}
-          cleared={cleared}
-          bestAccuracy={progress.bestAccuracy}
-          unlocked={progress.unlocked}
-        />
-      ) : null}
-
-      {screen === 'levels' ? (
-        <LevelSelectPanel
-          unlocked={progress.unlocked}
-          stars={progress.stars}
-          cleared={cleared}
-          onPick={startLevel}
-          onBack={openMenu}
-        />
-      ) : null}
-
-      {screen === 'tutorial' ? <TutorialPanel onDone={openMenu} /> : null}
-
-      {screen === 'game' ? (
-        <GameScreen
-          key={runId}
-          level={levelAt(levelId)}
-          onExit={openMenu}
-          onGameOver={finishRound}
-        />
-      ) : null}
-
-      {screen === 'result' ? (
-        <ResultScreen
-          result={result}
-          onAgain={again}
-          onNext={next}
-          onMenu={openMenu}
-        />
-      ) : null}
+    <View style={styles.container}>
+      {(menuArmechihbkpormdcangvacrszd || shchihbkpormdcangvacrszowGame) && (
+        <AchihbkpormdcangvacrszppPlaceholder />
+      )}
+      {!shchihbkpormdcangvacrszowGame && (
+        <View style={styles.loaderOverlay} pointerEvents="auto">
+          <LoaderScchihbkpormdcangvacrszreen
+            onchihbkpormdcangvacrszDone={handleFirchihbkpormdcangvacrszstProgress}
+            doneOnFirchihbkpormdcangvacrszstCycle
+          />
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  container: {
     flex: 1,
-    backgroundColor: THEME.colors.canvas,
+  },
+  loaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 10,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
+
+export default Appchihbkpormdcangvacrsz;
